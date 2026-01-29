@@ -23,25 +23,26 @@ const GEOJSON_URL =
 "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-provinces.geojson";
 
 const COMMUNITIES = [
-{ id:"andalucia", name:"Andalucía", provinces:["Almería","Cádiz","Córdoba","Granada","Huelva","Jaén","Málaga","Sevilla"]},
-{ id:"aragon", name:"Aragón", provinces:["Huesca","Teruel","Zaragoza"]},
-{ id:"asturias", name:"Asturias", provinces:["Asturias"]},
-{ id:"baleares", name:"Islas Baleares", provinces:["Illes Balears"]},
-{ id:"canarias", name:"Canarias", provinces:["Las Palmas","Santa Cruz de Tenerife"]},
-{ id:"cantabria", name:"Cantabria", provinces:["Cantabria"]},
-{ id:"castilla_la_mancha", name:"Castilla-La Mancha", provinces:["Albacete","Ciudad Real","Cuenca","Guadalajara","Toledo"]},
-{ id:"castilla_y_leon", name:"Castilla y León", provinces:["Ávila","Burgos","León","Palencia","Salamanca","Segovia","Soria","Valladolid","Zamora"]},
-{ id:"cataluna", name:"Cataluña", provinces:["Barcelona","Girona","Lleida","Tarragona"]},
-{ id:"valencia", name:"Comunidad Valenciana", provinces:["Alicante","Castellón","Valencia"]},
-{ id:"extremadura", name:"Extremadura", provinces:["Badajoz","Cáceres"]},
-{ id:"galicia", name:"Galicia", provinces:["A Coruña","Lugo","Ourense","Pontevedra"]},
-{ id:"rioja", name:"La Rioja", provinces:["La Rioja"]},
-{ id:"madrid", name:"Madrid", provinces:["Madrid"]},
-{ id:"murcia", name:"Murcia", provinces:["Murcia"]},
-{ id:"navarra", name:"Navarra", provinces:["Navarra"]},
-{ id:"pais_vasco", name:"País Vasco", provinces:["Álava","Bizkaia","Gipuzkoa"]}
+const COMMUNITIES = [
+  { id:"andalucia", name:"Andalucía", provinces:["Almería","Cádiz","Córdoba","Granada","Huelva","Jaén","Málaga","Sevilla"]},
+  { id:"aragon", name:"Aragón", provinces:["Huesca","Teruel","Zaragoza"]},
+  { id:"asturias", name:"Asturias", provinces:["Asturias"]},
+  { id:"baleares", name:"Islas Baleares", provinces:["Illes Balears"]},
+  { id:"canarias", name:"Canarias", provinces:["Las Palmas","Santa Cruz de Tenerife"]},
+  { id:"cantabria", name:"Cantabria", provinces:["Cantabria"]},
+  { id:"castilla_la_mancha", name:"Castilla-La Mancha", provinces:["Albacete","Ciudad Real","Cuenca","Guadalajara","Toledo"]},
+  { id:"castilla_y_leon", name:"Castilla y León", provinces:["Ávila","Burgos","León","Palencia","Salamanca","Segovia","Soria","Valladolid","Zamora"]},
+  { id:"cataluna", name:"Cataluña", provinces:["Barcelona","Gerona","Lérida","Tarragona"]},
+  { id:"valencia", name:"Comunidad Valenciana", provinces:["Alicante","Castellón","Valencia"]},
+  { id:"extremadura", name:"Extremadura", provinces:["Badajoz","Cáceres"]},
+  { id:"galicia", name:"Galicia", provinces:["La Coruña","Lugo","Orense","Pontevedra"]},
+  { id:"madrid", name:"Madrid", provinces:["Madrid"]},
+  { id:"murcia", name:"Región de Murcia", provinces:["Murcia"]},
+  { id:"navarra", name:"Navarra", provinces:["Navarra"]},
+  { id:"pais_vasco", name:"País Vasco", provinces:["Alava","Vizcaya","Guipuzcua"]},
+  { id:"rioja", name:"La Rioja", provinces:["La Rioja"]}
 ];
-
+ 
 const COLORS = ["#f59e0b","#ef4444","#22c55e","#06b6d4","#f97316","#84cc16","#eab308","#a855f7","#ec4899","#14b8a6","#65a30d","#0ea5e9","#d946ef","#dc2626","#fb7185","#10b981","#6366f1"];
 
 function renderPath(g){
