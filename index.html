@@ -1,121 +1,372 @@
-<script>
-const COMMUNITIES = [
-  {
-    id: "andalucia",
-    name: "Andalucía",
-    provinces: ["Almería", "Cádiz", "Córdoba", "Granada", "Huelva", "Jaén", "Málaga", "Sevilla"]
-  },
-  {
-    id: "aragon",
-    name: "Aragón",
-    provinces: ["Huesca", "Teruel", "Zaragoza"]
-  },
-  {
-    id: "asturias",
-    name: "Asturias",
-    provinces: ["Asturias"]
-  },
-  {
-    id: "baleares",
-    name: "Islas Baleares",
-    provinces: ["Islas Baleares"]
-  },
-  {
-    id: "canarias",
-    name: "Canarias",
-    provinces: ["Las Palmas", "Santa Cruz de Tenerife"]
-  },
-  {
-    id: "cantabria",
-    name: "Cantabria",
-    provinces: ["Cantabria"]
-  },
-  {
-    id: "castilla-la-mancha",
-    name: "Castilla-La Mancha",
-    provinces: ["Albacete", "Ciudad Real", "Cuenca", "Guadalajara", "Toledo"]
-  },
-  {
-    id: "castilla-y-leon",
-    name: "Castilla y León",
-    provinces: [
-      "Ávila",
-      "Burgos",
-      "León",
-      "Palencia",
-      "Salamanca",
-      "Segovia",
-      "Soria",
-      "Valladolid",
-      "Zamora"
-    ]
-  },
-  {
-    id: "cataluna",
-    name: "Cataluña",
-    provinces: ["Barcelona", "Girona", "Lleida", "Tarragona"]
-  },
-  {
-    id: "comunidad-valenciana",
-    name: "Comunidad Valenciana",
-    provinces: ["Alicante", "Castellón", "Valencia"]
-  },
-  {
-    id: "extremadura",
-    name: "Extremadura",
-    provinces: ["Badajoz", "Cáceres"]
-  },
-  {
-    id: "galicia",
-    name: "Galicia",
-    provinces: ["A Coruña", "Lugo", "Ourense", "Pontevedra"]
-  },
-  {
-    id: "la-rioja",
-    name: "La Rioja",
-    provinces: ["La Rioja"]
-  },
-  {
-    id: "madrid",
-    name: "Comunidad de Madrid",
-    provinces: ["Madrid"]
-  },
-  {
-    id: "murcia",
-    name: "Región de Murcia",
-    provinces: ["Murcia"]
-  },
-  {
-    id: "navarra",
-    name: "Navarra",
-    provinces: ["Navarra"]
-  },
-  {
-    id: "pais-vasco",
-    name: "País Vasco",
-    provinces: ["Álava", "Guipúzcoa", "Vizcaya"]
-  }
-];
-</script>
-<script>
-const COMMUNITY_COLORS = {
-  "andalucia": "#16A34A",
-  "aragon": "#DC2626",
-  "asturias": "#1E40AF",
-  "baleares": "#9333EA",
-  "canarias": "#F59E0B",
-  "cantabria": "#0EA5E9",
-  "castilla-la-mancha": "#7C2D12",
-  "castilla-y-leon": "#4D7C0F",
-  "cataluna": "#B91C1C",
-  "comunidad-valenciana": "#EA580C",
-  "extremadura": "#166534",
-  "galicia": "#2563EB",
-  "la-rioja": "#7E22CE",
-  "madrid": "#991B1B",
-  "murcia": "#CA8A04",
-  "navarra": "#7F1D1D",
-  "pais-vasco": "#065F46"
-};
-</script>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Provincias Challenge</title>
 
+    <!-- Tailwind CDN (sin instalar nada) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- React CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel para poder escribir JSX sin build -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+
+  <body class="m-0">
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useMemo, useEffect } = React;
+
+      const GEOJSON_URL =
+        "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-provinces.geojson";
+
+      // ✅ PEGA AQUÍ TUS CONSTANTS (COMMUNITIES y COMMUNITY_COLORS)
+      // EJEMPLO mínimo (tú lo reemplazas por el tuyo completo):
+      const COMMUNITIES = [
+        { id: "andalucia", name: "Andalucía", provinces: ["Sevilla", "Cádiz", "Málaga", "Huelva", "Córdoba", "Granada", "Jaén", "Almería"] },
+        // ... el resto
+      ];
+      const COMMUNITY_COLORS = {
+        andalucia: "#16A34A",
+        // ... el resto
+      };
+
+      const normalizeAll = (text) => {
+        if (!text) return [];
+        return text
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .split("/")
+          .map((s) => s.trim());
+      };
+
+      function renderPath(g) {
+        if (!g) return "";
+        const rings = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
+        return rings
+          .map((p) =>
+            p.map((r) => `M ${r.map((c) => c.join(",")).join(" L ")} Z`).join(" ")
+          )
+          .join(" ");
+      }
+
+      function App() {
+        const [geoData, setGeoData] = useState(null);
+        const [loading, setLoading] = useState(true);
+        const [phase, setPhase] = useState("SELECT_COMMUNITY");
+
+        const [gameState, setGameState] = useState({
+          completedProvinces: [],
+          completedCommunities: [],
+          currentCommunityIndex: 0,
+          unlockedCommunities: [COMMUNITIES[0].id],
+        });
+
+        const [selectedProvinceName, setSelectedProvinceName] = useState(null);
+        const [message, setMessage] = useState({
+          text: "Cargando...",
+          type: "info",
+        });
+
+        useEffect(() => {
+          fetch(GEOJSON_URL)
+            .then((res) => res.json())
+            .then((data) => {
+              setGeoData(data);
+              setLoading(false);
+              setMessage({ text: `Toca ${COMMUNITIES[0].name}`, type: "info" });
+            })
+            .catch(() => {
+              // ✅ IMPORTANTE: si falla, desbloquea la carga
+              setLoading(false);
+              setMessage({ text: "Error de carga", type: "error" });
+            });
+        }, []);
+
+        const currentCommunity = useMemo(
+          () => COMMUNITIES[gameState.currentCommunityIndex],
+          [gameState.currentCommunityIndex]
+        );
+
+        const pendingProvinces = useMemo(
+          () =>
+            currentCommunity.provinces.filter(
+              (p) => !gameState.completedProvinces.includes(p)
+            ),
+          [currentCommunity, gameState.completedProvinces]
+        );
+
+        const isGameFinished = gameState.completedProvinces.length === 50;
+
+        const isMatch = (mapName, targetName) => {
+          if (!mapName || !targetName) return false;
+          const mapParts = normalizeAll(mapName);
+          const targetParts = normalizeAll(targetName);
+          return (
+            mapParts.some((mp) => targetParts.includes(mp)) ||
+            targetParts.some((tp) => mapParts.includes(tp))
+          );
+        };
+
+        const handleMapClick = (mapName) => {
+          if (isGameFinished) return;
+
+          if (phase === "SELECT_COMMUNITY") {
+            const clickedInCurrent = currentCommunity.provinces.some((p) =>
+              isMatch(mapName, p)
+            );
+
+            if (clickedInCurrent) {
+              setPhase("PLACE_PROVINCES");
+              setMessage({ text: "¡Bien! Selecciona provincias.", type: "success" });
+            } else {
+              const otherComm = COMMUNITIES.find((c) =>
+                c.provinces.some((p) => isMatch(mapName, p))
+              );
+              setMessage({
+                text: `Eso es ${otherComm?.name || "otra zona"}.`,
+                type: "error",
+              });
+            }
+            return;
+          }
+
+          if (phase === "PLACE_PROVINCES") {
+            if (!selectedProvinceName) {
+              setMessage({ text: "Elige una provincia abajo.", type: "info" });
+              return;
+            }
+
+            if (isMatch(mapName, selectedProvinceName)) {
+              const newCompleted = [...gameState.completedProvinces, selectedProvinceName];
+              const isCommDone = currentCommunity.provinces.every((p) =>
+                newCompleted.includes(p)
+              );
+
+              setGameState((prev) => {
+                let nextIdx = prev.currentCommunityIndex;
+                let newDoneComms = prev.completedCommunities;
+                let newUnlocked = prev.unlockedCommunities;
+
+                if (isCommDone) {
+                  newDoneComms = [...prev.completedCommunities, currentCommunity.id];
+                  setPhase("SELECT_COMMUNITY");
+
+                  if (nextIdx < COMMUNITIES.length - 1) {
+                    nextIdx++;
+                    newUnlocked = [...new Set([...newUnlocked, COMMUNITIES[nextIdx].id])];
+                    setMessage({
+                      text: `¡Siguiente: ${COMMUNITIES[nextIdx].name}!`,
+                      type: "success",
+                    });
+                  } else {
+                    setMessage({ text: "¡Completado!", type: "success" });
+                  }
+                } else {
+                  setMessage({ text: "¡Correcto!", type: "success" });
+                }
+
+                return {
+                  ...prev,
+                  completedProvinces: newCompleted,
+                  completedCommunities: newDoneComms,
+                  currentCommunityIndex: nextIdx,
+                  unlockedCommunities: newUnlocked,
+                };
+              });
+
+              setSelectedProvinceName(null);
+            } else {
+              setMessage({ text: "No es esa.", type: "error" });
+            }
+          }
+        };
+
+        const resetGame = () => {
+          setGameState({
+            completedProvinces: [],
+            completedCommunities: [],
+            currentCommunityIndex: 0,
+            unlockedCommunities: [COMMUNITIES[0].id],
+          });
+          setPhase("SELECT_COMMUNITY");
+          setSelectedProvinceName(null);
+          setMessage({ text: `Toca ${COMMUNITIES[0].name}`, type: "info" });
+        };
+
+        if (loading) {
+          return (
+            <div className="h-[100dvh] w-full flex items-center justify-center bg-slate-900 text-white font-black uppercase tracking-widest text-[10px]">
+              Cargando Mapa...
+            </div>
+          );
+        }
+
+        return (
+          <div className="h-[100dvh] flex flex-col bg-slate-50 font-sans overflow-hidden">
+            <header className="bg-slate-900 text-white px-4 md:px-6 py-3 flex justify-between items-center border-b-2 border-amber-500 shadow-xl z-50 shrink-0">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="bg-amber-500 text-slate-900 px-1.5 py-0.5 rounded font-black italic text-[10px] md:text-xs">
+                  ESP
+                </div>
+                <h1 className="text-[10px] md:text-xs font-black uppercase tracking-widest truncate max-w-[120px] md:max-w-none">
+                  Provincias Challenge
+                </h1>
+              </div>
+
+              <div className="flex items-center gap-3 md:gap-6">
+                <div className="flex gap-2 md:gap-4 text-[9px] md:text-[10px] font-bold">
+                  <span className="text-amber-500">{gameState.completedProvinces.length}/50</span>
+                  <span className="text-sky-400">{gameState.completedCommunities.length}/17</span>
+                </div>
+                <button onClick={resetGame} className="text-slate-400 hover:text-white transition-colors">
+                  ↻
+                </button>
+              </div>
+            </header>
+
+            <main className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+              <section className="flex-[1.2] lg:flex-[9] bg-sky-50 relative flex items-center justify-center p-2 md:p-4 overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-200">
+                <svg
+                  viewBox="-11 35 15.5 9"
+                  className="w-full h-full drop-shadow-2xl transition-all duration-700"
+                  style={{ transform: "scaleY(-1)" }}
+                >
+                  {geoData?.features?.map((f, i) => {
+                    const mapName =
+                      f.properties.name || f.properties.NAME || f.properties.provincia;
+
+                    const isDone = gameState.completedProvinces.some((cp) => isMatch(mapName, cp));
+                    const comm = COMMUNITIES.find((c) =>
+                      c.provinces.some((p) => isMatch(mapName, p))
+                    );
+
+                    const isCurrent = comm?.id === currentCommunity.id;
+                    const isUnlocked = comm && gameState.unlockedCommunities.includes(comm.id);
+
+                    return (
+                      <path
+                        key={i}
+                        d={renderPath(f.geometry)}
+                        onClick={() => handleMapClick(mapName)}
+                        className="transition-all duration-300"
+                        style={{
+                          fill: isDone
+                            ? COMMUNITY_COLORS[comm?.id]
+                            : isCurrent
+                            ? "#FEF3C7"
+                            : "#FFFFFF",
+                          stroke: isDone ? "#FFFFFF" : isCurrent ? "#F59E0B" : "#CBD5E1",
+                          strokeWidth: 0.015,
+                          opacity: isUnlocked ? 1 : 0.15,
+                          cursor: isUnlocked && !isDone ? "pointer" : "default",
+                        }}
+                      />
+                    );
+                  })}
+                </svg>
+
+                <div className="absolute top-2 right-2 md:top-4 md:right-4 z-50 pointer-events-none">
+                  <div
+                    className={
+                      "px-3 py-1.5 md:px-4 md:py-2 rounded-lg shadow-xl border-2 text-[8px] md:text-[10px] font-black uppercase tracking-tight transition-all duration-300 " +
+                      (message.type === "success"
+                        ? "bg-emerald-500 text-white border-emerald-600"
+                        : message.type === "error"
+                        ? "bg-rose-500 text-white border-rose-600"
+                        : "bg-white text-slate-800 border-slate-200 shadow-sm")
+                    }
+                  >
+                    {message.text}
+                  </div>
+                </div>
+              </section>
+
+              <aside className="flex-1 lg:flex-[3] bg-white shadow-2xl flex flex-col overflow-hidden">
+                <div className="p-4 md:p-6 flex-1 overflow-y-auto space-y-4 md:space-y-6">
+                  <div
+                    className={
+                      "p-3 md:p-4 rounded-xl border-2 transition-colors " +
+                      (phase === "SELECT_COMMUNITY"
+                        ? "bg-amber-50 border-amber-200 shadow-sm"
+                        : "bg-sky-50 border-sky-100")
+                    }
+                  >
+                    <span className="text-[7px] md:text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                      {phase === "SELECT_COMMUNITY" ? "1. Toca en el Mapa" : "2. Elige Provincia"}
+                    </span>
+                    <h2
+                      className="text-sm md:text-lg font-black uppercase tracking-tight truncate"
+                      style={{ color: COMMUNITY_COLORS[currentCommunity.id] }}
+                    >
+                      {currentCommunity.name}
+                    </h2>
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase block px-1">
+                      {phase === "PLACE_PROVINCES" ? "Provincias a colocar:" : "Esperando selección..."}
+                    </span>
+
+                    {phase === "PLACE_PROVINCES" ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
+                        {pendingProvinces.map((p) => (
+                          <button
+                            key={p}
+                            onClick={() => setSelectedProvinceName(p)}
+                            className={
+                              "w-full p-2.5 md:p-3 rounded-lg text-left border-2 font-black uppercase text-[9px] md:text-[10px] transition-all active:scale-95 " +
+                              (selectedProvinceName === p
+                                ? "bg-amber-500 text-white border-amber-600 shadow-lg translate-x-1"
+                                : "bg-white text-slate-600 border-slate-100")
+                            }
+                          >
+                            {p}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-8 flex flex-col items-center justify-center border-2 border-dashed border-slate-100 rounded-xl bg-slate-50 opacity-40">
+                        <span className="text-[10px] font-bold text-center px-4 uppercase tracking-tighter">
+                          Busca {currentCommunity.name} arriba
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </aside>
+            </main>
+
+            {isGameFinished && (
+              <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
+                <div className="bg-white p-10 rounded-[2rem] shadow-2xl max-w-sm w-full text-center space-y-6 border-8 border-amber-500">
+                  <span className="text-6xl inline-block">🏆</span>
+                  <h2 className="text-2xl font-black text-slate-900 uppercase italic leading-none">
+                    ¡Completado!
+                  </h2>
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-tight">
+                    Has ubicado las 50 provincias correctamente.
+                  </p>
+                  <button
+                    onClick={resetGame}
+                    className="w-full py-4 bg-amber-500 text-slate-900 font-black text-sm rounded-xl active:scale-95 transition-all shadow-lg uppercase tracking-widest"
+                  >
+                    Nueva Partida
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>
