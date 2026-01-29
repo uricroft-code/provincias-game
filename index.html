@@ -12,25 +12,25 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 
-<body class="m-0 bg-slate-100">
+<body class="m-0">
 <div id="root"></div>
 
 <script type="text/babel">
 
-const { useState, useEffect, useMemo } = React;
+const { useState, useMemo, useEffect } = React;
 
 const GEOJSON_URL =
 "https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-provinces.geojson";
 
-/* =======================
-   COMUNIDADES COMPLETAS
-======================= */
+/* =========================
+   COMUNIDADES + PROVINCIAS
+========================= */
 
 const COMMUNITIES = [
 { id:"andalucia", name:"Andalucía", provinces:["Almería","Cádiz","Córdoba","Granada","Huelva","Jaén","Málaga","Sevilla"]},
 { id:"aragon", name:"Aragón", provinces:["Huesca","Teruel","Zaragoza"]},
 { id:"asturias", name:"Asturias", provinces:["Asturias"]},
-{ id:"baleares", name:"Islas Baleares", provinces:["Islas Baleares"]},
+{ id:"baleares", name:"Islas Baleares", provinces:["Illes Balears"]},
 { id:"canarias", name:"Canarias", provinces:["Las Palmas","Santa Cruz de Tenerife"]},
 { id:"cantabria", name:"Cantabria", provinces:["Cantabria"]},
 { id:"castilla-la-mancha", name:"Castilla-La Mancha", provinces:["Albacete","Ciudad Real","Cuenca","Guadalajara","Toledo"]},
@@ -66,9 +66,10 @@ navarra:"#7F1D1D",
 "pais-vasco":"#065F46"
 };
 
-/* ======================= */
+/* ========================= */
 
-const normalize = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+const normalize = t =>
+t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 
 function renderPath(g){
 if(!g) return "";
@@ -138,7 +139,8 @@ setSelected(null);
 }
 }
 
-if(loading) return <div className="h-screen flex items-center justify-center text-xl font-bold">Cargando mapa…</div>;
+if(loading)
+return <div className="h-screen flex items-center justify-center font-bold">Cargando mapa…</div>;
 
 return (
 <div className="h-screen flex flex-col">
@@ -150,7 +152,7 @@ return (
 
 <main className="flex-1 flex flex-col lg:flex-row">
 
-<div className="flex-1 p-2">
+<div className="flex-1 p-2 bg-sky-50">
 <svg viewBox="-11 35 15.5 9" className="w-full h-full" style={{transform:"scaleY(-1)"}}>
 {geo.features.map((f,i)=>{
 const name=f.properties.name||f.properties.NAME;
@@ -180,7 +182,8 @@ className={`block w-full mb-2 p-2 border rounded ${selected===p?"bg-amber-400":"
 </button>
 ))}
 
-{phase==="SELECT" && <p className="text-sm">Toca la comunidad en el mapa</p>}
+{phase==="SELECT" &&
+<p className="text-sm">Toca una provincia de esta comunidad</p>}
 
 </div>
 
