@@ -1,199 +1,121 @@
-<!doctype html>
-<html lang="es">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Provincias Challenge</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-</head>
-
-<body class="m-0">
-<div id="root"></div>
-
-<script type="text/babel">
-
-const { useState, useMemo, useEffect } = React;
-
-const GEOJSON_URL =
-"https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/spain-provinces.geojson";
-
-/* =========================
-   COMUNIDADES + PROVINCIAS
-========================= */
-
+<script>
 const COMMUNITIES = [
-{ id:"andalucia", name:"Andalucía", provinces:["Almería","Cádiz","Córdoba","Granada","Huelva","Jaén","Málaga","Sevilla"]},
-{ id:"aragon", name:"Aragón", provinces:["Huesca","Teruel","Zaragoza"]},
-{ id:"asturias", name:"Asturias", provinces:["Asturias"]},
-{ id:"baleares", name:"Islas Baleares", provinces:["Illes Balears"]},
-{ id:"canarias", name:"Canarias", provinces:["Las Palmas","Santa Cruz de Tenerife"]},
-{ id:"cantabria", name:"Cantabria", provinces:["Cantabria"]},
-{ id:"castilla-la-mancha", name:"Castilla-La Mancha", provinces:["Albacete","Ciudad Real","Cuenca","Guadalajara","Toledo"]},
-{ id:"castilla-y-leon", name:"Castilla y León", provinces:["Ávila","Burgos","León","Palencia","Salamanca","Segovia","Soria","Valladolid","Zamora"]},
-{ id:"cataluna", name:"Cataluña", provinces:["Barcelona","Girona","Lleida","Tarragona"]},
-{ id:"comunidad-valenciana", name:"Comunidad Valenciana", provinces:["Alicante","Castellón","Valencia"]},
-{ id:"extremadura", name:"Extremadura", provinces:["Badajoz","Cáceres"]},
-{ id:"galicia", name:"Galicia", provinces:["A Coruña","Lugo","Ourense","Pontevedra"]},
-{ id:"la-rioja", name:"La Rioja", provinces:["La Rioja"]},
-{ id:"madrid", name:"Comunidad de Madrid", provinces:["Madrid"]},
-{ id:"murcia", name:"Región de Murcia", provinces:["Murcia"]},
-{ id:"navarra", name:"Navarra", provinces:["Navarra"]},
-{ id:"pais-vasco", name:"País Vasco", provinces:["Álava","Guipúzcoa","Vizcaya"]}
+  {
+    id: "andalucia",
+    name: "Andalucía",
+    provinces: ["Almería", "Cádiz", "Córdoba", "Granada", "Huelva", "Jaén", "Málaga", "Sevilla"]
+  },
+  {
+    id: "aragon",
+    name: "Aragón",
+    provinces: ["Huesca", "Teruel", "Zaragoza"]
+  },
+  {
+    id: "asturias",
+    name: "Asturias",
+    provinces: ["Asturias"]
+  },
+  {
+    id: "baleares",
+    name: "Islas Baleares",
+    provinces: ["Islas Baleares"]
+  },
+  {
+    id: "canarias",
+    name: "Canarias",
+    provinces: ["Las Palmas", "Santa Cruz de Tenerife"]
+  },
+  {
+    id: "cantabria",
+    name: "Cantabria",
+    provinces: ["Cantabria"]
+  },
+  {
+    id: "castilla-la-mancha",
+    name: "Castilla-La Mancha",
+    provinces: ["Albacete", "Ciudad Real", "Cuenca", "Guadalajara", "Toledo"]
+  },
+  {
+    id: "castilla-y-leon",
+    name: "Castilla y León",
+    provinces: [
+      "Ávila",
+      "Burgos",
+      "León",
+      "Palencia",
+      "Salamanca",
+      "Segovia",
+      "Soria",
+      "Valladolid",
+      "Zamora"
+    ]
+  },
+  {
+    id: "cataluna",
+    name: "Cataluña",
+    provinces: ["Barcelona", "Girona", "Lleida", "Tarragona"]
+  },
+  {
+    id: "comunidad-valenciana",
+    name: "Comunidad Valenciana",
+    provinces: ["Alicante", "Castellón", "Valencia"]
+  },
+  {
+    id: "extremadura",
+    name: "Extremadura",
+    provinces: ["Badajoz", "Cáceres"]
+  },
+  {
+    id: "galicia",
+    name: "Galicia",
+    provinces: ["A Coruña", "Lugo", "Ourense", "Pontevedra"]
+  },
+  {
+    id: "la-rioja",
+    name: "La Rioja",
+    provinces: ["La Rioja"]
+  },
+  {
+    id: "madrid",
+    name: "Comunidad de Madrid",
+    provinces: ["Madrid"]
+  },
+  {
+    id: "murcia",
+    name: "Región de Murcia",
+    provinces: ["Murcia"]
+  },
+  {
+    id: "navarra",
+    name: "Navarra",
+    provinces: ["Navarra"]
+  },
+  {
+    id: "pais-vasco",
+    name: "País Vasco",
+    provinces: ["Álava", "Guipúzcoa", "Vizcaya"]
+  }
 ];
-
-const COMMUNITY_COLORS = {
-andalucia:"#16A34A",
-aragon:"#DC2626",
-asturias:"#1E40AF",
-baleares:"#9333EA",
-canarias:"#F59E0B",
-cantabria:"#0EA5E9",
-"castilla-la-mancha":"#7C2D12",
-"castilla-y-leon":"#4D7C0F",
-cataluna:"#B91C1C",
-"comunidad-valenciana":"#EA580C",
-extremadura:"#166534",
-galicia:"#2563EB",
-"la-rioja":"#7E22CE",
-madrid:"#991B1B",
-murcia:"#CA8A04",
-navarra:"#7F1D1D",
-"pais-vasco":"#065F46"
-};
-
-/* ========================= */
-
-const normalize = t =>
-t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
-
-function renderPath(g){
-if(!g) return "";
-const rings = g.type==="Polygon" ? [g.coordinates] : g.coordinates;
-return rings.map(p=>p.map(r=>`M ${r.map(c=>c.join(",")).join(" L ")} Z`).join(" ")).join(" ");
-}
-
-function App(){
-
-const [geo,setGeo] = useState(null);
-const [loading,setLoading] = useState(true);
-const [phase,setPhase] = useState("SELECT");
-const [selected,setSelected] = useState(null);
-
-const [state,setState] = useState({
-doneProv:[],
-doneComm:[],
-idx:0
-});
-
-useEffect(()=>{
-fetch(GEOJSON_URL)
-.then(r=>r.json())
-.then(d=>{ setGeo(d); setLoading(false); })
-.catch(()=>setLoading(false));
-},[]);
-
-const current = COMMUNITIES[state.idx];
-
-const pending = useMemo(
-()=> current.provinces.filter(p=>!state.doneProv.includes(p)),
-[state]
-);
-
-const match = (a,b)=> normalize(a).includes(normalize(b)) || normalize(b).includes(normalize(a));
-
-function clickProvince(mapName){
-
-if(phase==="SELECT"){
-if(current.provinces.some(p=>match(mapName,p))){
-setPhase("PLACE");
-}
-return;
-}
-
-if(!selected) return;
-
-if(match(mapName,selected)){
-
-const newDone = [...state.doneProv,selected];
-const commDone = current.provinces.every(p=>newDone.includes(p));
-
-let nextIdx = state.idx;
-
-if(commDone && nextIdx < COMMUNITIES.length-1){
-nextIdx++;
-setPhase("SELECT");
-}
-
-setState({
-doneProv:newDone,
-doneComm: commDone ? [...state.doneComm,current.id] : state.doneComm,
-idx:nextIdx
-});
-
-setSelected(null);
-}
-}
-
-if(loading)
-return <div className="h-screen flex items-center justify-center font-bold">Cargando mapa…</div>;
-
-return (
-<div className="h-screen flex flex-col">
-
-<header className="bg-slate-900 text-white p-3 flex justify-between">
-<b>Provincias Challenge</b>
-<span>{state.doneProv.length}/50</span>
-</header>
-
-<main className="flex-1 flex flex-col lg:flex-row">
-
-<div className="flex-1 p-2 bg-sky-50">
-<svg viewBox="-11 35 15.5 9" className="w-full h-full" style={{transform:"scaleY(-1)"}}>
-{geo.features.map((f,i)=>{
-const name=f.properties.name||f.properties.NAME;
-const done=state.doneProv.some(p=>match(name,p));
-return (
-<path key={i}
-d={renderPath(f.geometry)}
-onClick={()=>clickProvince(name)}
-fill={done ? COMMUNITY_COLORS[current.id] : "#fff"}
-stroke="#334155"
-strokeWidth="0.02"
-/>
-);
-})}
-</svg>
-</div>
-
-<div className="lg:w-64 p-3 bg-white border-l">
-
-<h2 className="font-bold mb-2">{current.name}</h2>
-
-{phase==="PLACE" && pending.map(p=>(
-<button key={p}
-onClick={()=>setSelected(p)}
-className={`block w-full mb-2 p-2 border rounded ${selected===p?"bg-amber-400":""}`}>
-{p}
-</button>
-))}
-
-{phase==="SELECT" &&
-<p className="text-sm">Toca una provincia de esta comunidad</p>}
-
-</div>
-
-</main>
-</div>
-);
-}
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-
 </script>
-</body>
-</html>
+<script>
+const COMMUNITY_COLORS = {
+  "andalucia": "#16A34A",
+  "aragon": "#DC2626",
+  "asturias": "#1E40AF",
+  "baleares": "#9333EA",
+  "canarias": "#F59E0B",
+  "cantabria": "#0EA5E9",
+  "castilla-la-mancha": "#7C2D12",
+  "castilla-y-leon": "#4D7C0F",
+  "cataluna": "#B91C1C",
+  "comunidad-valenciana": "#EA580C",
+  "extremadura": "#166534",
+  "galicia": "#2563EB",
+  "la-rioja": "#7E22CE",
+  "madrid": "#991B1B",
+  "murcia": "#CA8A04",
+  "navarra": "#7F1D1D",
+  "pais-vasco": "#065F46"
+};
+</script>
+
